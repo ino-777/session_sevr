@@ -1,55 +1,276 @@
-.wrapper {
-    overflow: hidden;
+:root {
+    --color-bg: #f4f5f9;
+    --color-surface: #ffffff;
+    --color-border: #e4e6ee;
+    --color-text: #1f2430;
+    --color-text-muted: #6b7280;
+    --color-primary: #4f6df5;
+    --color-primary-hover: #3f59e0;
+    --color-primary-soft: #eef1ff;
+    --color-danger: #ef4444;
+    --color-danger-soft: #fdeeee;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
 }
 
-@media screen and (min-width: 960px) {
-    .main {
-        margin-left: 300px;
-    }
+* {
+    box-sizing: border-box;
 }
 
-
-.sidebar {
-    position: fixed;
-    width: 300px;
-    height: 100vh;
-    overflow-y: scroll;
+body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
+
+/* ---------- App shell ---------- */
+
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: 14px 24px;
+}
+
+.app-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.app-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.app-container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 20px 40px;
+}
+
+/* ---------- Tabs ---------- */
+
+.tab-nav {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 4px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+.tab-nav-item {
+    flex: 1;
+    margin: 0 !important;
+}
+
+.tab-nav-item > a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tab-nav-item > a:hover {
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.tab-nav-item.uk-active > a {
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+}
+
+.panel-switcher {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* ---------- Panel ---------- */
+
+.panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 20px;
+}
+
+.panel-intro {
+    margin: -4px 0 16px;
+}
+
+.panel-intro p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+.backup-date {
+    margin-top: 4px !important;
+    font-size: 0.78rem !important;
+    color: var(--color-text-muted);
+}
+
+.panel-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.panel-toolbar-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.panel-toolbar-icons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.panel-body {
+    border-top: 1px solid var(--color-border);
+    padding-top: 8px;
+}
+
+/* ---------- Buttons ---------- */
 
 .btn {
-    width: 150px;
-    height: 40px;
-    margin: 5px 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
     border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
     cursor: pointer;
-    border-radius: 5px;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-#btn-tab-save {
-    color: white;
-    background-color: #47e9ff;
-}
-#btn-tab-save:hover {
-    background-color: #47eaffb4;
+.btn-primary {
+    color: #ffffff;
+    background: var(--color-primary);
 }
 
-
-.btn-tab-create {
-    color: white;
-    background-color: #4d90fe;
+.btn-primary:hover {
+    background: var(--color-primary-hover);
 }
 
-.btn-tab-create:hover {
-    background-color: #4d91fece;
+.btn-outline {
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
 }
 
+.btn-outline:hover {
+    background: var(--color-bg);
+    border-color: #d0d3de;
+}
 
 .icon-btn {
-    background: none;
-    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.icon-btn:hover {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.icon-btn-danger:hover {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+}
+
+/* ---------- Tab list ---------- */
+
+.tab-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.tab-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 6px;
+    border-radius: var(--radius-md);
+    transition: background 0.12s ease;
+}
+
+.tab-item:hover {
+    background: var(--color-bg);
+}
+
+.tab-item + .tab-item {
+    border-top: 1px solid var(--color-border);
+}
+
+.tab-item-checkbox {
+    display: flex;
+    align-items: center;
     cursor: pointer;
 }
-.icon-btn:hover {
-    background:#eeeeee;
+
+.tab-item-favicon {
+    flex: none;
+    border-radius: 4px;
+}
+
+.tab-item-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.tab-item-title:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.empty-state {
+    display: none;
+    margin: 0;
+    padding: 24px 8px;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
 }

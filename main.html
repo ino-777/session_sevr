@@ -9,7 +9,6 @@
     <!-- UIkit CSS -->
     <link rel="stylesheet" href="src/css/uikit/uikit.min.css" />
 
-
     <link rel="stylesheet" href="src/css/style.css">
 
     <!-- UIkit js -->
@@ -18,86 +17,107 @@
 </head>
 
 <body>
-    <div class="">
-        <div class="sidebar uk-visible@m">
-            <div class="uk-container uk-container-small uk-margin-large-top">
-                <h1><img src="icon16.png" width="50px" height="50px"></h1>
-                <h3><a href="#top" class="uk-link-reset">Session Sevr</a></h3>
-                <ul class="uk-nav uk-nav-default">
-                    <li class="uk-nav-header">Link</li>
-                    <li><a href="#save-pages">Save Pages</a></li>
-                    <li><a href="#backup-pages">Backup Pages</a></li>
-                    <li><a href="#recently-pages">Recently Closed Pages</a></li>
-                </ul>
-            </div>
-        </div>
-        <header class="uk-position-top uk-hidden@m">
-            <div class="uk-position-right uk-padding uk-padding-small">
-                <button class="uk-button uk-button-link" type="button" uk-toggle="target: #offcanvas-flip">
-                    <span uk-icon="icon: menu; ratio: 1.5"></span>
-                </button>
-            </div>
-            <div id="offcanvas-flip" uk-offcanvas="flip: true; overlay: true">
-                <div class="uk-offcanvas-bar">
-            
-                    <button class="uk-offcanvas-close" type="button" uk-close></button>
-            
-                    <div class="uk-container uk-container-small uk-margin-large-top">
-                        <h1><img src="icon16.png" width="50px" height="50px"></h1>
-                        <h3><a href="#top" class="uk-link-reset">Session Sevr</a></h3>
-                        <ul class="uk-nav uk-nav-default">
-                            <li class="uk-nav-header">Link</li>
-                            <li><a href="#save-pages">Save Pages</a></li>
-                            <li><a href="#backup-pages">Backup Pages</a></li>
-                            <li><a href="#recently-pages">Recently Closed Pages</a></li>
-                        </ul>
-                    </div>
-                </div>
+    <div class="app">
+        <header class="app-header">
+            <div class="app-header-brand">
+                <img src="icon16.png" width="28" height="28" alt="">
+                <span class="app-title">Session Sevr</span>
             </div>
         </header>
-        <div class="main uk-section uk-section-default">
-            <div class="uk-container uk-container-small">
-                <div class="uk-vertical-align uk-text-center">
-                    <h2 id="save-pages">Saved Pages <span uk-icon="refresh" id="tab-refresh"
-                            class="icon-btn"></span>
-                    </h2>
-                    <button id="btn-tab-save" class="btn">Save Pages</span></button>
-                    <button id="btn-tab-create" class="btn btn-tab-create">Open All <span
-                            uk-icon="move"></span></button>
-                    <span uk-icon="trash" id="tab-remove" class="icon-btn uk-margin-medium-left"></span>
-                    <div class="uk-card uk-card-body">
-                        <ul id="list-tab" class="uk-list" uk-accordion>
-                        </ul>
-                    </div>
-                </div>
 
-                <div class="uk-margin uk-margin-large-top uk-vertical-align uk-text-center">
-                    <h2 id="backup-pages">Backup Pages <span uk-icon="refresh"
-                            id="tab-backup-refresh" class="icon-btn"></span></h2>
-                    <p class="uk-text-default">Back up all currently open pages periodically.</p>
-                    <p id="backup-date"></p>
-                    <button id="btn-tab-backup-create" class="btn btn-tab-create">Open All <span
-                            uk-icon="move"></span></button>
-                    <div class="uk-card uk-card-body">
-                        <ul id="list-tab-backup" class="uk-list" uk-accordion>
-                        </ul>
-                    </div>
-                </div>
+        <div class="app-container">
+            <ul class="tab-nav" uk-tab="connect: #panel-switcher">
+                <li class="tab-nav-item"><a href="#">
+                        <span uk-icon="icon: bookmark; ratio: 0.9"></span>
+                        Saved Pages
+                    </a></li>
+                <li class="tab-nav-item"><a href="#">
+                        <span uk-icon="icon: history; ratio: 0.9"></span>
+                        Backup Pages
+                    </a></li>
+                <li class="tab-nav-item"><a href="#">
+                        <span uk-icon="icon: trash; ratio: 0.9"></span>
+                        Recently Closed
+                    </a></li>
+            </ul>
 
-                <div class="uk-margin uk-margin-large-top uk-vertical-align uk-text-center">
-                    <h2 id="recently-pages">Recently Closed Pages <span uk-icon="refresh"
-                            id="tab-recently-refresh" class="icon-btn"></span></h2>
-                    <p class="uk-text-default">Here are the 20 most recentry closed pages.</p>
-                    <button id="btn-tab-recently-create" class="btn btn-tab-create">Open All <span
-                            uk-icon="move"></span></button>
-                    <div class="uk-card uk-card-body">
-                        <ul id="list-tab-recently" class="uk-list" uk-accordion>
-                        </ul>
+            <ul id="panel-switcher" class="uk-switcher panel-switcher">
+                <!-- Saved Pages -->
+                <li>
+                    <div class="panel">
+                        <div class="panel-toolbar">
+                            <div class="panel-toolbar-actions">
+                                <button id="btn-tab-save" class="btn btn-primary">
+                                    <span uk-icon="icon: plus-circle; ratio: 0.9"></span>
+                                    Save Current Pages
+                                </button>
+                                <button id="btn-tab-create" class="btn btn-outline">
+                                    <span uk-icon="icon: link; ratio: 0.9"></span>
+                                    Open All
+                                </button>
+                            </div>
+                            <div class="panel-toolbar-icons">
+                                <span uk-icon="icon: trash; ratio: 1.1" id="tab-remove" class="icon-btn icon-btn-danger" uk-tooltip="Delete selected"></span>
+                                <span uk-icon="icon: refresh; ratio: 1.1" id="tab-refresh" class="icon-btn" uk-tooltip="Refresh"></span>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <ul id="list-tab" class="tab-list"></ul>
+                            <p class="empty-state" data-empty-for="list-tab">No saved pages yet. Click "Save Current Pages" to get started.</p>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </li>
+
+                <!-- Backup Pages -->
+                <li>
+                    <div class="panel">
+                        <div class="panel-intro">
+                            <p>Currently open pages are backed up automatically every few minutes.</p>
+                            <p id="backup-date" class="backup-date"></p>
+                        </div>
+                        <div class="panel-toolbar">
+                            <div class="panel-toolbar-actions">
+                                <button id="btn-tab-backup-create" class="btn btn-outline">
+                                    <span uk-icon="icon: link; ratio: 0.9"></span>
+                                    Open All
+                                </button>
+                            </div>
+                            <div class="panel-toolbar-icons">
+                                <span uk-icon="icon: refresh; ratio: 1.1" id="tab-backup-refresh" class="icon-btn" uk-tooltip="Refresh"></span>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <ul id="list-tab-backup" class="tab-list"></ul>
+                            <p class="empty-state" data-empty-for="list-tab-backup">No backups yet.</p>
+                        </div>
+                    </div>
+                </li>
+
+                <!-- Recently Closed Pages -->
+                <li>
+                    <div class="panel">
+                        <div class="panel-intro">
+                            <p>The 20 most recently closed pages.</p>
+                        </div>
+                        <div class="panel-toolbar">
+                            <div class="panel-toolbar-actions">
+                                <button id="btn-tab-recently-create" class="btn btn-outline">
+                                    <span uk-icon="icon: link; ratio: 0.9"></span>
+                                    Open All
+                                </button>
+                            </div>
+                            <div class="panel-toolbar-icons">
+                                <span uk-icon="icon: refresh; ratio: 1.1" id="tab-recently-refresh" class="icon-btn" uk-tooltip="Refresh"></span>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <ul id="list-tab-recently" class="tab-list"></ul>
+                            <p class="empty-state" data-empty-for="list-tab-recently">No recently closed pages.</p>
+                        </div>
+                    </div>
+                </li>
+            </ul>
         </div>
-
     </div>
 
     <script type="module" src="src/js/main.js"></script>

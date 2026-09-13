@@ -12,30 +12,31 @@ const insertTabHTML = (tabs, target, key = "") => {
         target.insertAdjacentHTML(
             "beforeend",
             `
-        <li>
-            <div class="uk-flex uk-flex-middle">
-                <div class="uk-width-auto uk-margin-small-right">
-                    <input class="uk-checkbox checkbox-${key}" type="checkbox" name="${index}">
-                </div>
-                <div class="uk-width-auto uk-margin-small-right">
-                    <img src="${tab.favIconUrl || defaultIcon}" width="25" height="25">
-                </div>
-                <div class="uk-width-expand">
-                <a href="${tab.url}" target="_blank", class="uk-link-text">
-                    ${tab.title}
-                    </a>
-                </div>
-            </div>
+        <li class="tab-item">
+            <label class="tab-item-checkbox">
+                <input class="uk-checkbox checkbox-${key}" type="checkbox" name="${index}">
+            </label>
+            <img class="tab-item-favicon" src="${tab.favIconUrl || defaultIcon}" width="20" height="20" onerror="this.src='${defaultIcon}'">
+            <a href="${tab.url}" target="_blank" class="tab-item-title" title="${tab.url}">
+                ${tab.title}
+            </a>
         </li>
         `
         );
     })
+    updateEmptyState(target, tabs.length === 0);
+}
+
+const updateEmptyState = (target, isEmpty) => {
+    const emptyState = document.querySelector(`[data-empty-for="${target.id}"]`);
+    if (!emptyState) { return; }
+    emptyState.style.display = isEmpty ? "block" : "none";
 }
 
 const refreshTabInfo = async (key, target) => {
     target.innerHTML = "";
     const result = await getStorage(key);
-    if (!result.hasOwnProperty(key)) { return; }
+    if (!result.hasOwnProperty(key)) { updateEmptyState(target, true); return; }
     const tabs = result[key];
     insertTabHTML(tabs, target, key);
 }
