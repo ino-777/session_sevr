@@ -38,24 +38,4 @@ python3 -m http.server 8000
 
 Note that features relying on `chrome.*` APIs (saving/restoring tabs, backup, recently closed pages) won't work in this mode since those APIs only exist inside the extension context — use this only to preview styling/layout.
 
-Since the lists are populated from `chrome.storage` at runtime, they'll be empty on `localhost`. To preview the styling with sample data, open the DevTools console on the page and paste in:
-
-```js
-["list-tab", "list-tab-backup", "list-tab-recently"].forEach(id => {
-    document.getElementById(id).innerHTML = `
-        <li>
-            <div class="uk-flex uk-flex-middle">
-                <div class="uk-width-auto uk-margin-small-right">
-                    <input class="uk-checkbox" type="checkbox">
-                </div>
-                <div class="uk-width-auto uk-margin-small-right">
-                    <img src="icon-chrome.png" width="25" height="25">
-                </div>
-                <div class="uk-width-expand">
-                    <a href="#" target="_blank" class="uk-link-text">Sample Tab Title</a>
-                </div>
-            </div>
-        </li>
-    `.repeat(3);
-});
-```
+Since the lists are populated from `chrome.storage` at runtime, they'll be empty on `localhost`. To preview the styling with sample data, open the DevTools console on the page and paste in the contents of [`scripts/mock-preview-data.js`](scripts/mock-preview-data.js).
