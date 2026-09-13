@@ -1,8 +1,10 @@
 export const getStorage = (key) => new Promise(resolve => {
+    if (!chrome?.storage?.local) { resolve({}); return; }
     chrome.storage.local.get(key, resolve);
 })
 
 export const setStorage = (key, value) => new Promise(resolve => {
+    if (!chrome?.storage?.local) { resolve(); return; }
     chrome.storage.local.set({[key]: value}, resolve);
 })
 
@@ -41,6 +43,7 @@ export const removeTabs = async (key, indices) => {
 }
 
 export const getRecentlyClosedTabs = async (limit=20) => {
+    if (!chrome?.sessions) { return []; }
     const recentlyClosed = await chrome.sessions.getRecentlyClosed();
     let tabs = recentlyClosed.flatMap(v => {
         if(v.hasOwnProperty("tab")) {
