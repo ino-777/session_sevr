@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "Save Page",
+    "name": "Session Savr",
     "version": "1.0.0",
     "icons": {
         "16": "icon16.png"
