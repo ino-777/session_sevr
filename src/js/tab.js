@@ -95,6 +95,14 @@ export const removeGroup = async (groupId) => {
     await setStorage(GROUPS, groups.filter(group => group.id !== groupId));
 }
 
+export const addPageToGroup = async (groupId, url, title, windowId) => {
+    const groups = await getGroups();
+    const group = groups.find(group => group.id === groupId);
+    if (!group) { return; }
+    group.tabs.push({ url, title: title || url, favIconUrl: "", windowId });
+    await setStorage(GROUPS, groups);
+}
+
 export const removeTabFromGroup = async (groupId, index) => {
     const groups = await getGroups();
     const group = groups.find(group => group.id === groupId);

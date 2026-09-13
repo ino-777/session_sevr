@@ -8,6 +8,7 @@ import {
     renameGroup,
     removeGroup,
     removeTabFromGroup,
+    addPageToGroup,
     openGroupTabs,
 } from "./tab.js";
 
@@ -82,19 +83,53 @@ const refreshTabInfo = async (key, target) => {
 // scrolling to reach the ones further down).
 const expandedGroups = new Set();
 
+// Splits a group's flat tab list back into the original browser windows they
+// came from (tabs saved together share a windowId), preserving each tab's
+// original array index so remove/add operations still target the right entry.
+const getWindowGroups = (tabs) => {
+    const windowGroups = [];
+    const indexByWindowId = new Map();
+    tabs.forEach((tab, index) => {
+        const key = String(tab.windowId);
+        if (!indexByWindowId.has(key)) {
+            indexByWindowId.set(key, windowGroups.length);
+            windowGroups.push({ windowId: tab.windowId, items: [] });
+        }
+        windowGroups[indexByWindowId.get(key)].items.push({ tab, index });
+    });
+    return windowGroups;
+}
+
 const renderGroup = (group, target) => {
     const defaultIcon = "icon-chrome.png";
     const isExpanded = expandedGroups.has(group.id);
 
-    const tabItemsHTML = group.tabs.map((tab, index) => `
-        <li class="tab-item">
-            <img class="tab-item-favicon" src="${escapeHtml(tab.favIconUrl || defaultIcon)}" width="20" height="20">
-            <a href="${escapeHtml(tab.url)}" target="_blank" class="tab-item-title" title="${escapeHtml(tab.url)}">
-                ${escapeHtml(tab.title)}
-            </a>
-            <span uk-icon="icon: close; ratio: 0.8" class="icon-btn icon-btn-sm icon-btn-danger tab-item-remove" data-index="${index}" uk-tooltip="Remove"></span>
-        </li>
-    `).join("");
+    const windowGroups = getWindowGroups(group.tabs);
+    const showWindowLabels = windowGroups.length > 1;
+
+    const windowSectionsHTML = windowGroups.map((windowGroup, windowIndex) => {
+        const itemsHTML = windowGroup.items.map(({ tab, index }) => `
+            <li class="tab-item">
+                <img class="tab-item-favicon" src="${escapeHtml(tab.favIconUrl || defaultIcon)}" width="20" height="20">
+                <a href="${escapeHtml(tab.url)}" target="_blank" class="tab-item-title" title="${escapeHtml(tab.url)}">
+                    ${escapeHtml(tab.title)}
+                </a>
+                <span uk-icon="icon: close; ratio: 0.8" class="icon-btn icon-btn-sm icon-btn-danger tab-item-remove" data-index="${index}" uk-tooltip="Remove"></span>
+            </li>
+        `).join("");
+
+        return `
+            <div class="tab-window">
+                ${showWindowLabels ? `
+                <div class="tab-window-label">
+                    <span uk-icon="icon: thumbnails; ratio: 0.7"></span>
+                    Window ${windowIndex + 1}
+                    <span class="tab-window-count">(${windowGroup.items.length})</span>
+                </div>` : ""}
+                <ul class="tab-list">${itemsHTML}</ul>
+            </div>
+        `;
+    }).join("");
 
     target.insertAdjacentHTML(
         "beforeend",
@@ -108,6 +143,10 @@ const renderGroup = (group, target) => {
                     <span class="group-card-meta">${group.tabs.length} page${group.tabs.length === 1 ? "" : "s"} · ${formatDate(group.createdAt)}</span>
                 </div>
                 <div class="group-card-actions">
+                    <a href="#" class="group-action-link group-add-page" uk-tooltip="Add a page by URL">
+                        <span uk-icon="icon: plus-circle; ratio: 0.75"></span>
+                        Add page
+                    </a>
                     <a href="#" class="group-action-link group-open-all" uk-tooltip="Open all pages in this group">
                         <span uk-icon="icon: link; ratio: 0.75"></span>
                         Open all
@@ -115,10 +154,62 @@ const renderGroup = (group, target) => {
                     <span uk-icon="icon: trash; ratio: 0.9" class="icon-btn icon-btn-danger group-delete" uk-tooltip="Delete group"></span>
                 </div>
             </div>
-            <ul class="tab-list">${tabItemsHTML}</ul>
+            <div class="group-tabs">${windowSectionsHTML}</div>
         </div>
         `
     );
+}
+
+// Opens a small UIkit dialog for adding a page by URL, letting the user pick
+// which of the group's existing windows it should belong to (or a new one),
+// so re-opening the group with "Open all" keeps pages grouped by window.
+const openAddPageDialog = (group, groupList) => {
+    const windowGroups = getWindowGroups(group.tabs);
+    const windowOptionsHTML = windowGroups.map((windowGroup, index) => `
+        <option value="${index}">Window ${index + 1} (${windowGroup.items.length} page${windowGroup.items.length === 1 ? "" : "s"})</option>
+    `).join("");
+
+    const dialog = UIkit.modal.dialog(`
+        <div class="uk-modal-body">
+            <h3 class="uk-modal-title">Add a page</h3>
+            <input class="uk-input uk-margin-small-bottom" id="add-page-url" type="text" placeholder="https://example.com">
+            <input class="uk-input uk-margin-small-bottom" id="add-page-title" type="text" placeholder="Title (optional)">
+            <select class="uk-select" id="add-page-window">
+                ${windowOptionsHTML}
+                <option value="__new__">New window</option>
+            </select>
+        </div>
+        <div class="uk-modal-footer uk-text-right">
+            <button class="uk-button uk-button-default uk-modal-close" type="button">Cancel</button>
+            <button class="uk-button uk-button-primary" id="add-page-submit" type="button">Add</button>
+        </div>
+    `);
+
+    const urlInput = dialog.$el.querySelector("#add-page-url");
+    const titleInput = dialog.$el.querySelector("#add-page-title");
+    const windowSelect = dialog.$el.querySelector("#add-page-window");
+    urlInput.focus();
+
+    const submit = async () => {
+        const rawUrl = urlInput.value.trim();
+        if (!rawUrl) { urlInput.focus(); return; }
+        const url = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+        const title = titleInput.value.trim() || url;
+        const selected = windowSelect.value;
+        const windowId = selected === "__new__" ? `manual_${Date.now()}` : windowGroups[Number(selected)].windowId;
+
+        await addPageToGroup(group.id, url, title, windowId);
+        expandedGroups.add(group.id);
+        dialog.hide();
+        await renderGroups(groupList);
+    }
+
+    dialog.$el.querySelector("#add-page-submit").addEventListener("click", submit);
+    [urlInput, titleInput].forEach(input => {
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") { submit(); }
+        });
+    });
 }
 
 const renderGroups = async (target) => {
@@ -161,6 +252,15 @@ window.onload = async () => {
         const card = e.target.closest(".group-card");
         if (!card) { return; }
         const groupId = card.getAttribute("data-group-id");
+
+        if (e.target.closest(".group-add-page")) {
+            e.preventDefault();
+            const groups = await getGroups();
+            const group = groups.find(g => g.id === groupId);
+            if (!group) { return; }
+            openAddPageDialog(group, groupList);
+            return;
+        }
 
         if (e.target.closest(".group-open-all")) {
             e.preventDefault();

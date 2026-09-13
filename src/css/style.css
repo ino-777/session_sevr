@@ -313,12 +313,36 @@ body {
     transform: rotate(90deg);
 }
 
-.group-card .tab-list {
+.group-card .group-tabs {
     display: none;
 }
 
-.group-card.is-expanded .tab-list {
+.group-card.is-expanded .group-tabs {
     display: block;
+}
+
+.tab-window + .tab-window {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+}
+
+.tab-window-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 6px 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--color-text-muted);
+}
+
+.tab-window-count {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
 }
 
 .group-card-title {
