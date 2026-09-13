@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Session Sevr</title>
+    <title>Session Savr</title>
     <!-- UIkit CSS -->
     <link rel="stylesheet" href="src/css/uikit/uikit.min.css" />
 
@@ -21,7 +21,7 @@
         <header class="app-header">
             <div class="app-header-brand">
                 <img src="icon16.png" width="28" height="28" alt="">
-                <span class="app-title">Session Sevr</span>
+                <span class="app-title">Session Savr</span>
             </div>
         </header>
 
@@ -51,19 +51,14 @@
                                     <span uk-icon="icon: plus-circle; ratio: 0.9"></span>
                                     Save Current Pages
                                 </button>
-                                <button id="btn-tab-create" class="btn btn-outline">
-                                    <span uk-icon="icon: link; ratio: 0.9"></span>
-                                    Open All
-                                </button>
                             </div>
                             <div class="panel-toolbar-icons">
-                                <span uk-icon="icon: trash; ratio: 1.1" id="tab-remove" class="icon-btn icon-btn-danger" uk-tooltip="Delete selected"></span>
                                 <span uk-icon="icon: refresh; ratio: 1.1" id="tab-refresh" class="icon-btn" uk-tooltip="Refresh"></span>
                             </div>
                         </div>
                         <div class="panel-body">
-                            <ul id="list-tab" class="tab-list"></ul>
-                            <p class="empty-state" data-empty-for="list-tab">No saved pages yet. Click "Save Current Pages" to get started.</p>
+                            <div id="group-list" class="group-list"></div>
+                            <p class="empty-state" data-empty-for="group-list">No saved pages yet. Click "Save Current Pages" to get started.</p>
                         </div>
                     </div>
                 </li>

@@ -274,3 +274,105 @@ body {
     font-size: 0.82rem;
     color: var(--color-text-muted);
 }
+
+/* ---------- Groups ---------- */
+
+.group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.group-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.group-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--color-bg);
+    cursor: pointer;
+}
+
+.group-card.is-expanded .group-card-header {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.group-toggle-icon {
+    flex: none;
+    color: var(--color-text-muted);
+    transition: transform 0.15s ease;
+}
+
+.group-card.is-expanded .group-toggle-icon {
+    transform: rotate(90deg);
+}
+
+.group-card .tab-list {
+    display: none;
+}
+
+.group-card.is-expanded .tab-list {
+    display: block;
+}
+
+.group-card-title {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    min-width: 0;
+    gap: 6px 10px;
+}
+
+.group-card-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.group-card-meta {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.group-action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: var(--radius-md);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.group-action-link:hover {
+    background: var(--color-primary-soft);
+}
+
+.group-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: none;
+}
+
+.group-card .tab-list {
+    max-height: none;
+    padding: 4px 8px;
+}
+
+.icon-btn-sm {
+    width: 24px;
+    height: 24px;
+    flex: none;
+}

@@ -1,9 +1,44 @@
-import { saveAllTabs, createAllTabs, removeTabs, getStorage, getRecentlyClosedTabs } from "./tab.js";
+import {
+    createAllTabs,
+    getStorage,
+    getRecentlyClosedTabs,
+    migrateLegacyTabs,
+    getGroups,
+    saveTabsAsGroup,
+    renameGroup,
+    removeGroup,
+    removeTabFromGroup,
+    openGroupTabs,
+} from "./tab.js";
 
 
-const TABS = "tabs";
 const TABS_BACKUP = "tabs_backup";
 const TABS_RECENTLY = "tabs_recently";
+
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;",
+}[ch]));
+
+const formatDate = (timestamp) => new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+}).format(new Date(timestamp));
+
+// Manifest V3 extension pages forbid inline event handlers (e.g. onerror="..."),
+// so the favicon fallback has to be wired up from JS after insertion instead.
+const bindFaviconFallback = (target) => {
+    const defaultIcon = "icon-chrome.png";
+    target.querySelectorAll(".tab-item-favicon").forEach(img => {
+        img.addEventListener("error", () => { img.src = defaultIcon; }, { once: true });
+    });
+}
 
 const insertTabHTML = (tabs, target, key = "") => {
     const defaultIcon = "icon-chrome.png";
@@ -16,14 +51,15 @@ const insertTabHTML = (tabs, target, key = "") => {
             <label class="tab-item-checkbox">
                 <input class="uk-checkbox checkbox-${key}" type="checkbox" name="${index}">
             </label>
-            <img class="tab-item-favicon" src="${tab.favIconUrl || defaultIcon}" width="20" height="20" onerror="this.src='${defaultIcon}'">
-            <a href="${tab.url}" target="_blank" class="tab-item-title" title="${tab.url}">
-                ${tab.title}
+            <img class="tab-item-favicon" src="${escapeHtml(tab.favIconUrl || defaultIcon)}" width="20" height="20">
+            <a href="${escapeHtml(tab.url)}" target="_blank" class="tab-item-title" title="${escapeHtml(tab.url)}">
+                ${escapeHtml(tab.title)}
             </a>
         </li>
         `
         );
     })
+    bindFaviconFallback(target);
     updateEmptyState(target, tabs.length === 0);
 }
 
@@ -41,13 +77,67 @@ const refreshTabInfo = async (key, target) => {
     insertTabHTML(tabs, target, key);
 }
 
+// Groups whose tab list is currently expanded (in-memory only; every group
+// starts collapsed so a long list of saved sessions doesn't force a lot of
+// scrolling to reach the ones further down).
+const expandedGroups = new Set();
+
+const renderGroup = (group, target) => {
+    const defaultIcon = "icon-chrome.png";
+    const isExpanded = expandedGroups.has(group.id);
+
+    const tabItemsHTML = group.tabs.map((tab, index) => `
+        <li class="tab-item">
+            <img class="tab-item-favicon" src="${escapeHtml(tab.favIconUrl || defaultIcon)}" width="20" height="20">
+            <a href="${escapeHtml(tab.url)}" target="_blank" class="tab-item-title" title="${escapeHtml(tab.url)}">
+                ${escapeHtml(tab.title)}
+            </a>
+            <span uk-icon="icon: close; ratio: 0.8" class="icon-btn icon-btn-sm icon-btn-danger tab-item-remove" data-index="${index}" uk-tooltip="Remove"></span>
+        </li>
+    `).join("");
+
+    target.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div class="group-card${isExpanded ? " is-expanded" : ""}" data-group-id="${escapeHtml(group.id)}">
+            <div class="group-card-header">
+                <div class="group-card-title">
+                    <span uk-icon="icon: chevron-right; ratio: 0.8" class="group-toggle-icon"></span>
+                    <span class="group-card-name">${escapeHtml(group.name)}</span>
+                    <span uk-icon="icon: pencil; ratio: 0.8" class="icon-btn icon-btn-sm group-rename" uk-tooltip="Rename"></span>
+                    <span class="group-card-meta">${group.tabs.length} page${group.tabs.length === 1 ? "" : "s"} · ${formatDate(group.createdAt)}</span>
+                </div>
+                <div class="group-card-actions">
+                    <a href="#" class="group-action-link group-open-all" uk-tooltip="Open all pages in this group">
+                        <span uk-icon="icon: link; ratio: 0.75"></span>
+                        Open all
+                    </a>
+                    <span uk-icon="icon: trash; ratio: 0.9" class="icon-btn icon-btn-danger group-delete" uk-tooltip="Delete group"></span>
+                </div>
+            </div>
+            <ul class="tab-list">${tabItemsHTML}</ul>
+        </div>
+        `
+    );
+}
+
+const renderGroups = async (target) => {
+    await migrateLegacyTabs();
+    const groups = await getGroups();
+    target.innerHTML = "";
+    updateEmptyState(target, groups.length === 0);
+    groups.forEach(group => renderGroup(group, target));
+    bindFaviconFallback(target);
+}
+
 
 window.onload = async () => {
 
-    // Insert Tab Information
-    const listTab = document.getElementById("list-tab");
-    refreshTabInfo(TABS, listTab);
+    // Saved Pages (named groups)
+    const groupList = document.getElementById("group-list");
+    await renderGroups(groupList);
 
+    // Backup / Recently closed (flat lists)
     const listTabBackup = document.getElementById("list-tab-backup");
     refreshTabInfo(TABS_BACKUP, listTabBackup);
 
@@ -58,15 +148,60 @@ window.onload = async () => {
     // Save button
     const btnTabSave = document.getElementById("btn-tab-save") || document.createElement("button");
     btnTabSave.addEventListener("click", async (e) => {
-        await saveAllTabs(TABS);
-        await refreshTabInfo(TABS, listTab);
-        alert("Pages have been successfully saved.");
+        const suggestedName = `Session ${new Date().toLocaleString()}`;
+        const name = prompt("Name this saved session:", suggestedName);
+        if (name === null) { return; }
+        const group = await saveTabsAsGroup(name.trim() || suggestedName);
+        expandedGroups.add(group.id);
+        await renderGroups(groupList);
     })
 
-    // Open button
-    const btnTabCreate = document.getElementById("btn-tab-create") || document.createElement("button");
-    btnTabCreate.addEventListener("click", async (e) => {
-        await createAllTabs(TABS);
+    // Group actions (open all / delete group / remove single tab)
+    groupList.addEventListener("click", async (e) => {
+        const card = e.target.closest(".group-card");
+        if (!card) { return; }
+        const groupId = card.getAttribute("data-group-id");
+
+        if (e.target.closest(".group-open-all")) {
+            e.preventDefault();
+            await openGroupTabs(groupId);
+            return;
+        }
+
+        if (e.target.closest(".group-rename")) {
+            const currentName = card.querySelector(".group-card-name").textContent.trim();
+            const name = prompt("Rename this saved session:", currentName);
+            if (name === null || !name.trim() || name.trim() === currentName) { return; }
+            await renameGroup(groupId, name.trim());
+            await renderGroups(groupList);
+            return;
+        }
+
+        if (e.target.closest(".group-delete")) {
+            if (!confirm("Delete this saved group?")) { return; }
+            await removeGroup(groupId);
+            expandedGroups.delete(groupId);
+            await renderGroups(groupList);
+            return;
+        }
+
+        const removeBtn = e.target.closest(".tab-item-remove");
+        if (removeBtn) {
+            const index = parseInt(removeBtn.getAttribute("data-index"));
+            await removeTabFromGroup(groupId, index);
+            await renderGroups(groupList);
+            return;
+        }
+
+        // Anywhere else on the header toggles the tab list open/closed.
+        if (e.target.closest(".group-card-header")) {
+            if (expandedGroups.has(groupId)) {
+                expandedGroups.delete(groupId);
+            } else {
+                expandedGroups.add(groupId);
+            }
+            card.classList.toggle("is-expanded");
+        }
     })
 
     const btnTabBackupCreate = document.getElementById("btn-tab-backup-create") || document.createElement("button");
@@ -83,7 +218,7 @@ window.onload = async () => {
     // Refresh button
     const tabRefresh = document.getElementById("tab-refresh") || document.createElement("button");
     tabRefresh.addEventListener("click", async (e) => {
-        await refreshTabInfo(TABS, listTab);
+        await renderGroups(groupList);
     })
 
     const tabBackupRefresh = document.getElementById("tab-backup-refresh") || document.createElement("button");
@@ -96,18 +231,6 @@ window.onload = async () => {
         const recentlyClosedTabs = await getRecentlyClosedTabs();
         listTabRecently.innerHTML = "";
         await insertTabHTML(recentlyClosedTabs, listTabRecently, TABS_RECENTLY);
-    })
-
-
-    // Remove button
-    const tabRemove = document.getElementById("tab-remove") || document.createElement("button");
-    tabRemove.addEventListener("click", async (e) => {
-        let result = confirm("Are you sure you want to delete this page?");
-        if (!result) { return }
-        const checks = document.getElementsByClassName("checkbox-tabs");
-        let checkedIndices = Array.from(checks).filter(check => check.checked).map(check => parseInt(check.getAttribute("name")));
-        await removeTabs(TABS, checkedIndices);
-        await refreshTabInfo(TABS, listTab);
     })
 
     // Show backup date
@@ -126,7 +249,3 @@ window.onload = async () => {
         textBackupDate.innerHTML = "Auto saved at " + fDate;
     }
 }
-
-
-
-
