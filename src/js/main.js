@@ -9,6 +9,7 @@ import {
     removeGroup,
     removeTabFromGroup,
     addPageToGroup,
+    setGroupTabs,
     openGroupTabs,
 } from "./tab.js";
 
@@ -109,7 +110,8 @@ const renderGroup = (group, target) => {
 
     const windowSectionsHTML = windowGroups.map((windowGroup, windowIndex) => {
         const itemsHTML = windowGroup.items.map(({ tab, index }) => `
-            <li class="tab-item">
+            <li class="tab-item" data-url="${escapeHtml(tab.url)}" data-title="${escapeHtml(tab.title)}" data-favicon="${escapeHtml(tab.favIconUrl || "")}">
+                <span uk-icon="icon: move; ratio: 0.7" class="tab-item-drag" uk-tooltip="Drag to reorder or move to another window"></span>
                 <img class="tab-item-favicon" src="${escapeHtml(tab.favIconUrl || defaultIcon)}" width="20" height="20">
                 <a href="${escapeHtml(tab.url)}" target="_blank" class="tab-item-title" title="${escapeHtml(tab.url)}">
                     ${escapeHtml(tab.title)}
@@ -119,14 +121,14 @@ const renderGroup = (group, target) => {
         `).join("");
 
         return `
-            <div class="tab-window">
+            <div class="tab-window" data-window-id="${escapeHtml(String(windowGroup.windowId))}">
                 ${showWindowLabels ? `
                 <div class="tab-window-label">
                     <span uk-icon="icon: thumbnails; ratio: 0.7"></span>
                     Window ${windowIndex + 1}
                     <span class="tab-window-count">(${windowGroup.items.length})</span>
                 </div>` : ""}
-                <ul class="tab-list">${itemsHTML}</ul>
+                <ul class="tab-list" uk-sortable="group: sortable-${escapeHtml(group.id)}; handle: .tab-item-drag">${itemsHTML}</ul>
             </div>
         `;
     }).join("");
@@ -158,6 +160,30 @@ const renderGroup = (group, target) => {
         </div>
         `
     );
+}
+
+// Rebuilds a group's tab array from the current DOM after a drag-and-drop
+// reorder/move, since UIkit Sortable only moves DOM nodes around — it
+// doesn't know about our underlying storage model. Each .tab-window carries
+// the windowId its pages should be saved under, and each .tab-item carries
+// the page data needed to reconstruct the tab object.
+const collectGroupTabsFromDOM = (card) => {
+    const tabs = [];
+    card.querySelectorAll(".tab-window").forEach(windowEl => {
+        const rawWindowId = windowEl.getAttribute("data-window-id");
+        const windowId = rawWindowId === "undefined"
+            ? undefined
+            : (isNaN(Number(rawWindowId)) ? rawWindowId : Number(rawWindowId));
+        windowEl.querySelectorAll(".tab-item").forEach(li => {
+            tabs.push({
+                url: li.getAttribute("data-url"),
+                title: li.getAttribute("data-title"),
+                favIconUrl: li.getAttribute("data-favicon") || "",
+                windowId,
+            });
+        });
+    });
+    return tabs;
 }
 
 // Opens a small UIkit dialog for adding a page by URL, letting the user pick
@@ -302,6 +328,18 @@ window.onload = async () => {
             }
             card.classList.toggle("is-expanded");
         }
+    })
+
+    // Persist the new order/window assignment once a drag-and-drop reorder
+    // or cross-window move finishes (UIkit Sortable's "stop" event).
+    groupList.addEventListener("stop", async (e) => {
+        const card = e.target.closest(".group-card");
+        if (!card) { return; }
+        const groupId = card.getAttribute("data-group-id");
+        const tabs = collectGroupTabsFromDOM(card);
+        await setGroupTabs(groupId, tabs);
+        expandedGroups.add(groupId);
+        await renderGroups(groupList);
     })
 
     const btnTabBackupCreate = document.getElementById("btn-tab-backup-create") || document.createElement("button");

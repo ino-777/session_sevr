@@ -111,6 +111,17 @@ export const removeTabFromGroup = async (groupId, index) => {
     await setStorage(GROUPS, groups);
 }
 
+// Replaces a group's whole tab list in one go, used after drag-and-drop
+// reordering or moving pages between windows (the new order/window
+// assignment is read back from the DOM, not diffed against the old array).
+export const setGroupTabs = async (groupId, tabs) => {
+    const groups = await getGroups();
+    const group = groups.find(group => group.id === groupId);
+    if (!group) { return; }
+    group.tabs = tabs;
+    await setStorage(GROUPS, groups);
+}
+
 export const openGroupTabs = async (groupId) => {
     const groups = await getGroups();
     const group = groups.find(group => group.id === groupId);

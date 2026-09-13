@@ -245,6 +245,16 @@ body {
     cursor: pointer;
 }
 
+.tab-item-drag {
+    flex: none;
+    color: var(--color-text-muted);
+    cursor: grab;
+}
+
+.tab-item-drag:active {
+    cursor: grabbing;
+}
+
 .tab-item-favicon {
     flex: none;
     border-radius: 4px;
